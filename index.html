@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AcadInsight – Program Chair Dashboard</title>
+<meta name="description" content="AcadInsight: analytics and decision-support dashboard combining Student and Faculty Portal data with SETE results. BAT 405 prototype with sample data.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#e9ebee}
+#dash-root{max-width:1320px;margin:0 auto;padding:24px 16px}
+.ai{--red:#c62f2f;--red-dark:#a32424;--gold:#f0a030;--dark:#343a40;--bg:#f3f4f6;--line:#e5e7eb;--text:#1f2328;--muted:#6b7280;
+  --ok:#28a745;--warn:#d9861a;--bad:var(--red);--grid:#e9ecef;--ref:#868e96;--chart-muted:#ced4da;
+  --sh:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.06);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;
+  color:var(--text);background:var(--bg);display:flex;flex-direction:column;gap:20px;padding:20px;border-radius:14px;container-type:inline-size}
+.ai-head{background:var(--dark);color:#fff;padding:26px 28px 22px;border-radius:12px;box-shadow:var(--sh);border-bottom:3px solid var(--gold)}
+.ai-brand{display:flex;align-items:center;gap:16px}
+.ai-logo{flex:none;width:64px;height:64px;border-radius:16px;background:var(--red);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 2px rgba(255,255,255,.12)}
+.ai-eyebrow{color:var(--gold);font-weight:600;font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin:0 0 4px}
+.ai-head h1{color:#fff;font-weight:600;font-size:1.75rem;letter-spacing:-.01em;margin:0}
+.ai-lede{color:#e5e7eb;margin:12px 0 0;font-size:14px}
+.ai-scope{display:block;color:#9ca3af;margin-top:4px;font-size:12px;letter-spacing:.02em}
+.ai-filters{display:flex;flex-wrap:wrap;align-items:flex-end;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);padding:16px 20px;gap:16px}
+.ai-filters label{display:flex;flex-direction:column;gap:6px;min-width:140px;flex:1 1 140px;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dash-select{appearance:none;-webkit-appearance:none;font:inherit;font-size:14px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--text);background-color:#fff;border:1px solid #d1d5db;border-radius:8px;padding:8px 32px 8px 10px;min-height:38px;cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5 6 7.5 9 4.5' fill='none' stroke='%236b7280' stroke-width='1.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center}
+.dash-select:focus{outline:2px solid var(--red);outline-offset:1px}
+.ai-btn{font:inherit;font-size:13px;font-weight:600;letter-spacing:.02em;background:var(--red);border:1px solid var(--red);color:#fff;border-radius:8px;padding:8px 18px;min-height:38px;cursor:pointer;transition:background .15s}
+.ai-btn:hover{background:var(--red-dark)}
+.ai-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.ai-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);padding:20px 20px 18px;display:flex;flex-direction:column;gap:8px}
+.ai-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#d1d5db}
+.ai-card.is-ok::before{background:var(--ok)}
+.ai-card.is-warn::before{background:var(--warn)}
+.ai-card.is-bad::before{background:var(--bad)}
+.ai-card h3{margin:0;color:var(--muted);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+.ai-val{font-weight:600;font-size:2.1rem;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums;min-height:2.5rem}
+.ai-note{margin:0;font-size:12px;line-height:1.45;color:var(--muted)}
+.ai-card .ai-note:last-child{margin-top:auto;padding-top:10px;border-top:1px solid #f0f1f3;color:#9ca3af}
+.ai-good{color:var(--ok)}.ai-badt{color:var(--bad)}.ai-warnt{color:var(--warn)}
+.ai-panel{background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:var(--sh);padding:22px 24px;min-width:0}
+.ai-panel h2{margin:0 0 2px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px}
+.ai-panel h2::before{content:'';width:3px;height:16px;border-radius:2px;background:var(--red)}
+.ai-sub{margin:0 0 16px;font-size:12.5px;line-height:1.5;color:var(--muted)}
+.ai-grid{display:grid;gap:16px;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)}
+.ai-wide{grid-column:1/-1}
+@container (max-width:780px){.ai-grid{grid-template-columns:minmax(0,1fr)}}
+.ai-chart{position:relative;min-height:250px}
+.ai-chart svg{display:block}
+.ai-chart svg text{fill:var(--muted);font-size:11px;font-family:inherit}
+.ai-chart svg text.lbl-strong{fill:var(--text);font-size:12px}
+.ai-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:4px}
+.ai-legend i{display:inline-block;width:16px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+.ai-tip{position:absolute;left:0;top:0;pointer-events:none;background:#fff;border:1px solid var(--line);box-shadow:0 8px 24px rgba(16,24,40,.12);border-radius:8px;padding:8px 10px;font-size:12px;white-space:nowrap;opacity:0;z-index:5}
+.ai-tip b{display:block;font-weight:600}
+.ai-tip span{display:block;color:var(--muted)}
+#alerts h2::before{background:var(--gold)}
+.ai-alerts{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;min-height:40px}
+.ai-alerts li{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.45}
+.ai-alerts p{margin:2px 0 0}
+.ai-dot{flex:none;width:10px;height:10px;border-radius:50%;margin-top:5px;background:var(--muted)}
+.sev-bad{border-left:3px solid var(--bad)!important}.sev-bad .ai-dot{background:var(--bad)}.sev-bad .ai-tag{color:var(--bad)}
+.sev-warn{border-left:3px solid var(--warn)!important}.sev-warn .ai-dot{background:var(--warn)}.sev-warn .ai-tag{color:var(--warn)}
+.sev-info{border-left:3px solid #9ca3af!important}
+.ai-tag{font-size:10.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ai-none{margin:0;color:var(--ok)}
+.ai-empty{margin:0;padding:24px 0;color:var(--muted);font-size:12px}
+.ai-notes summary{cursor:pointer;font-weight:600;font-size:14px}
+.ai-notes dl{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:6px 16px;font-size:12px;margin:12px 0}
+.ai-notes dt{font-weight:600}
+.ai-notes dd{margin:0;color:var(--muted)}
+.ai-notes h4{margin:12px 0 4px;font-size:14px}
+.ai-notes ul,.ai-notes p{font-size:12px;color:var(--muted);margin:4px 0}
+.ai-footer{text-align:center;font-size:11.5px;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+<div id="dash-root">
+<div class="ai">
+<header class="ai-head" id="header">
+<div class="ai-brand">
+<div class="ai-logo" id="app-logo"><svg viewBox="40 0 196 214" width="44" height="48" role="img" aria-label="AcadInsight logo" style="display:block"><path d="M70 72 C70 22 130 2 190 30 C215 42 228 62 226 88 L204 94 C200 66 176 50 150 48 C120 46 98 56 88 76 Z" fill="#FFFFFF"/><g stroke="#C62F2F" stroke-width="4" stroke-linecap="round" fill="none"><path d="M100 26 L108 57"/><path d="M130 14 L133 48"/><path d="M160 17 L156 49"/><path d="M188 30 L177 57"/><path d="M212 50 L196 74"/></g><path d="M56 112 C58 80 90 60 125 60 C165 60 194 90 192 140 C191 165 186 185 176 200 Q118 190 56 204 Z" fill="#FFFFFF" stroke="#C62F2F" stroke-width="7" stroke-linejoin="round"/><path d="M72 104 L136 100 Q143 100 140 107 L134 120 Q132 123 128 123 L90 124 L90 208 L72 208 Z" fill="#C62F2F"/><rect x="104" y="164" width="10" height="22" rx="2" fill="#C62F2F"/><rect x="120" y="152" width="10" height="34" rx="2" fill="#C62F2F"/><rect x="136" y="140" width="10" height="46" rx="2" fill="#C62F2F"/></svg></div>
+<div class="ai-brand-text">
+<p class="ai-eyebrow">AcadInsight · BS Information Technology</p>
+<h1>Program Chair Dashboard</h1>
+</div>
+</div>
+<p class="ai-lede"><span data-draw="lede"></span><span class="ai-lede-bad" hidden>Some indicators crossed their warning thresholds. See Alerts below.</span><span class="ai-lede-ok" hidden>All indicators are within their targets for this selection.</span><span class="ai-scope" data-draw="scope">—</span></p>
+</header>
+
+<section class="ai-filters" id="filters" aria-label="Filters">
+<label>Academic year<select class="dash-select" data-draw="f_ay" aria-label="Academic year"></select></label>
+<label>Semester<select class="dash-select" data-param="sem" aria-label="Semester"><option value="1st Semester">1st Semester</option><option value="2nd Semester">2nd Semester</option></select></label>
+<label>Year level<select class="dash-select" data-param="yl" aria-label="Year level"><option value="All">All year levels</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option></select></label>
+<label>Faculty (coded)<select class="dash-select" data-draw="f_fac" aria-label="Faculty"></select></label>
+<button type="button" class="ai-btn" id="reset-filters">Reset filters</button>
+</section>
+
+<section class="ai-cards" id="kpis" aria-label="Key performance indicators">
+<article class="ai-card" id="card-enrolled">
+<h3>Total enrolled students</h3>
+<div class="ai-val" data-draw="k_enrolled">—</div>
+<p class="ai-note"><span data-draw="k_enrolled_chg">—</span> vs. previous semester</p>
+<p class="ai-note">Alert if the change falls below <span data-draw="t_enr">—</span></p>
+</article>
+<article class="ai-card" id="card-gwa">
+<h3>Program average GWA</h3>
+<div class="ai-val" data-draw="k_gwa">—</div>
+<p class="ai-note"><span data-draw="gwa_flag"></span><span class="ai-msg-ok ai-good" hidden>Within the <span data-draw="t_gwa">—</span> limit</span><span class="ai-msg-bad ai-badt" hidden>Worse than the <span data-draw="t_gwa">—</span> limit</span></p>
+<p class="ai-note">1.00 is highest; 3.00 is passing</p>
+</article>
+<article class="ai-card" id="card-withdrawal">
+<h3>Withdrawal / dropout rate</h3>
+<div class="ai-val" data-draw="k_wd">—</div>
+<p class="ai-note"><span data-draw="wd_flag"></span><span class="ai-msg-ok ai-good" hidden>Within the <span data-draw="t_wd">—</span> limit</span><span class="ai-msg-bad ai-badt" hidden>Above the <span data-draw="t_wd">—</span> limit</span></p>
+<p class="ai-note">Students who dropped or withdrew</p>
+</article>
+<article class="ai-card" id="card-fill">
+<h3>Class fill rate</h3>
+<div class="ai-val" data-draw="k_fill">—</div>
+<p class="ai-note"><b data-draw="k_under">—</b> under-filled · <b data-draw="k_over">—</b> overloaded</p>
+<p class="ai-note">Healthy range <span data-draw="t_filllo">—</span> to <span data-draw="t_fillhi">—</span> of capacity</p>
+</article>
+<article class="ai-card" id="card-sete">
+<h3>Faculty below SETE threshold</h3>
+<div class="ai-val" data-draw="k_sete">—</div>
+<p class="ai-note"><b data-draw="k_ins">—</b> not interpreted (response rate under <span data-draw="t_resp">—</span>)</p>
+<p class="ai-note">Average below <span data-draw="t_sete">—</span>, all faculty this semester</p>
+</article>
+</section>
+
+<section class="ai-panel" id="alerts">
+<h2>Alerts</h2>
+<p class="ai-sub">Indicators past their warning thresholds for the current filters. SETE alerts are prompts for support, not personnel decisions.</p>
+<ul class="ai-alerts" data-draw="alerts"></ul>
+<p class="ai-none" hidden>No indicators are past their thresholds.</p>
+</section>
+
+<section class="ai-grid" id="charts">
+<article class="ai-panel" id="sete-trend">
+<h2>SETE rating across semesters</h2>
+<p class="ai-sub">Respondent-weighted average of the four SETE dimensions (scale 1 to 5). Dashed lines mark the target (<span data-draw="t_target">—</span>) and the alert level (<span data-draw="t_sete">—</span>). The shaded column is the selected semester. Pick a faculty code to compare with the program.</p>
+<div class="ai-chart" data-draw="c_trend"></div>
+</article>
+<article class="ai-panel" id="sete-dims">
+<h2>SETE rating by evaluation dimension</h2>
+<p class="ai-sub">Selected semester and faculty. The year level filter does not apply to SETE.</p>
+<div class="ai-chart" data-draw="c_dims"></div>
+</article>
+<article class="ai-panel ai-wide" id="class-fill">
+<h2>Class fill rate by course</h2>
+<p class="ai-sub">Enrolled students ÷ section capacity. Dashed lines mark <span data-draw="t_filllo">—</span> and <span data-draw="t_fillhi">—</span>.</p>
+<div class="ai-chart" data-draw="c_fill"></div>
+</article>
+</section>
+
+<details class="ai-panel ai-notes" id="notes">
+<summary>KPI definitions, data sources and privacy</summary>
+<dl>
+<dt>Total enrolled</dt><dd>Officially enrolled students in the program for the semester (Student and Faculty Portal).</dd>
+<dt>Average GWA</dt><dd>Enrollment-weighted average of year-level general weighted averages. Lower is better.</dd>
+<dt>Withdrawal rate</dt><dd>Students who dropped or withdrew ÷ total enrolled × 100.</dd>
+<dt>Class fill rate</dt><dd>Total enrolled ÷ total capacity of the filtered sections × 100.</dd>
+<dt>Faculty below SETE threshold</dt><dd>Faculty whose average SETE rating is below the alert level and whose response rate meets the minimum. Results with too few responses are not interpreted.</dd>
+</dl>
+<h4>Protecting confidential data</h4>
+<ul>
+<li>Faculty appear as codes (FAC-01 to FAC-08). Names are revealed only to authorized users after university sign-in.</li>
+<li>Student data is shown only as totals and averages. No individual records or grades appear.</li>
+<li>Role-based access: a Program Chair sees only their own program. Open-ended SETE comments are not displayed.</li>
+<li>SETE results are one source of evidence. They are read together with peer observation, class outcomes and context.</li>
+</ul>
+<p>Prototype for BAT 405. All figures are sample data written for the prototype, not real university records.</p>
+</details>
+<p class="ai-footer">AcadInsight prototype · BAT 405 Analytics Application · Sample data only</p>
+</div>
+</div>
+
+<script src="d3.min.js"></script>
+<script src="data.js"></script>
+<script>
+/* Small runtime: holds the data, computed tables, filters and redraws. */
+window.dash=(function(){
+  var store={},draws=[],listeners=[];
+  var DEFAULTS={ay:'2025-2026',sem:'2nd Semester',yl:'All',fac:'All'};
+  var params=Object.assign({},DEFAULTS);
+  Object.keys(window.ACAD_DATA).forEach(function(k){store[k]=window.ACAD_DATA[k];});
+  function run(){
+    listeners.forEach(function(f){f();});
+    draws.forEach(function(d){
+      document.querySelectorAll('[data-draw="'+d[0]+'"]').forEach(function(el){
+        try{d[1](el);}catch(e){console.error('Drawing '+d[0]+' failed',e);}
+      });
+    });
+  }
+  return {
+    data:function(id){return id in store?{status:'ok',data:store[id]}:{status:'missing',data:[]};},
+    calc:function(id,o){store[id]=o.fn.apply(null,o.inputs.map(function(i){return store[i];}));},
+    draw:function(name,fn){draws.push([name,fn]);},
+    onData:function(fn){listeners.push(fn);},
+    params:function(){return Object.assign({},params);},
+    setParams:function(o){Object.assign(params,o);run();},
+    resetParams:function(){params=Object.assign({},DEFAULTS);run();},
+    _run:run
+  };
+})();
+</script>
+<script>
+window.AI_T={target:4,seteFloor:3.5,minResp:60,gwaMax:2.5,wdMax:5,enrDrop:-10,fillLo:50,fillHi:100};
+window.AI=(function(){
+var T=window.AI_T;
+var DEF={ay:'2025-2026',sem:'2nd Semester',yl:'All',fac:'All'};
+var L=d3.formatLocale({decimal:'.',thousands:',',grouping:[3],currency:['',''],minus:'-'});
+var f1=L.format('.1f'),f2=L.format('.2f'),fi=L.format(',d');
+function P(){var p=dash.params()||{};return {ay:p.ay||DEF.ay,sem:p.sem||DEF.sem,yl:p.yl||DEF.yl,fac:p.fac||DEF.fac};}
+function st(ids){var s='ok';ids.forEach(function(id){if(dash.data(id).status!=='ok')s='error';});return s;}
+function span(text,cls){var e=document.createElement('span');e.textContent=text;if(cls)e.className=cls;return e;}
+function rows(id){var d=dash.data(id);return d.status==='ok'&&Array.isArray(d.data)?d.data:[];}
+function same(r,p){return r.academic_year===p.ay&&r.semester===p.sem;}
+function prog(p){return rows('kpi_program').find(function(r){return same(r,p)&&r.year_level===p.yl;});}
+function fill(p){return rows('fill_summary').find(function(r){return same(r,p)&&r.year_level===p.yl&&r.faculty===p.fac;});}
+function flags(p){return rows('sete_flags').find(function(r){return same(r,p);});}
+function pct(v){return f1(v)+'%';}
+function signed(v){return (v>0?'+':'')+f1(v)+'%';}
+function alerts(p){
+var out=[];var r=prog(p);
+if(r){var who=p.yl==='All'?'Program':p.yl;
+if(r.enrolled_change!==null&&r.enrolled_change<T.enrDrop)out.push({sev:'warn',tag:'Enrollment',parts:[who+' enrollment changed by ',span(signed(r.enrolled_change)),' vs. the previous semester (alert below '+T.enrDrop+'%). Check retention and shifting students.']});
+if(r.avg_gwa>T.gwaMax)out.push({sev:'bad',tag:'Grades',parts:[who+' average GWA is ',span(f2(r.avg_gwa)),', worse than the '+f2(T.gwaMax)+' limit. Review difficult courses and refer students to advising.']});
+if(r.withdrawal_rate>T.wdMax)out.push({sev:'bad',tag:'Retention',parts:[who+' withdrawal rate is ',span(pct(r.withdrawal_rate)),', above the '+T.wdMax+'% limit. Follow up with students who dropped.']});}
+rows('class_fill').filter(function(c){return same(c,p)&&(p.yl==='All'||c.year_level===p.yl)&&(p.fac==='All'||c.faculty===p.fac);}).forEach(function(c){
+if(c.fill_rate<T.fillLo)out.push({sev:'warn',tag:'Class size',parts:[c.course_code+' '+c.course_title+' is under-filled at ',span(pct(c.fill_rate)),'. Consider merging sections or reviewing the offering.']});
+if(c.fill_rate>T.fillHi)out.push({sev:'warn',tag:'Class size',parts:[c.course_code+' '+c.course_title+' is overloaded at ',span(pct(c.fill_rate)),'. Consider opening another section.']});});
+rows('sete_fac').filter(function(f){return same(f,p)&&(p.fac==='All'||f.faculty===p.fac);}).forEach(function(f){
+if(f.status==='Below threshold')out.push({sev:'bad',tag:'Teaching',parts:[f.faculty+' has an average SETE rating of ',span(f2(f.overall)),' (alert level '+f2(T.seteFloor)+') with a ',span(pct(f.response_rate)),' response rate. Recommend mentoring and peer observation, reviewed with other evidence.']});
+if(f.status==='Insufficient responses')out.push({sev:'info',tag:'SETE data',parts:['The SETE result for '+f.faculty+' is not interpreted: only ',span(pct(f.response_rate)),' of students responded (minimum '+T.minResp+'%).']});});
+return out;}
+function empty(el,msg){var e=document.createElement('p');e.className='ai-empty';e.textContent=msg;el.appendChild(e);}
+function ready(el,s){if(s==='ok')return true;el.replaceChildren();empty(el,'Failed to load');return false;}
+function tip(el){var t=document.createElement('div');t.className='ai-tip';el.appendChild(t);return {show:function(ev,lines){t.replaceChildren.apply(t,lines.map(function(s,i){var e=document.createElement(i?'span':'b');e.textContent=s;return e;}));var pt=d3.pointer(ev,el);t.style.opacity=1;var w=t.offsetWidth,h=t.offsetHeight;t.style.left=Math.max(0,Math.min(el.clientWidth-w,pt[0]-w/2))+'px';t.style.top=Math.max(0,pt[1]-h-14)+'px';},hide:function(){t.style.opacity=0;}};}
+return {T:T,P:P,st:st,span:span,rows:rows,prog:prog,fill:fill,flags:flags,f1:f1,f2:f2,fi:fi,pct:pct,signed:signed,alerts:alerts,ready:ready,empty:empty,tip:tip};
+})();
+</script>
+<script>
+/* Computed tables (KPIs) from the sample data. */
+dash.calc('kpi_program',{inputs:['program_terms'],fn:function(program_terms){
+var key=function(r){return r.academic_year+'|'+r.semester;};
+var terms=Array.from(new Set(program_terms.map(key)));
+var levels=['All'].concat(Array.from(new Set(program_terms.map(function(r){return r.year_level;}))));
+var sum=function(rs,f){return rs.reduce(function(a,r){return a+f(r);},0);};
+var out=[];
+terms.forEach(function(term,i){levels.forEach(function(level){
+var pick=function(t){return program_terms.filter(function(r){return key(r)===t&&(level==='All'||r.year_level===level);});};
+var cur=pick(term);if(!cur.length)return;
+var enrolled=sum(cur,function(r){return +r.enrolled;}),withdrawn=sum(cur,function(r){return +r.withdrawn;});
+var previous=i>0?sum(pick(terms[i-1]),function(r){return +r.enrolled;}):null;
+out.push({academic_year:cur[0].academic_year,semester:cur[0].semester,year_level:level,enrolled:enrolled,withdrawn:withdrawn,
+withdrawal_rate:+(withdrawn/enrolled*100).toFixed(1),
+avg_gwa:+(sum(cur,function(r){return +r.avg_gwa*+r.enrolled;})/enrolled).toFixed(2),
+previous_enrolled:previous,
+enrolled_change:previous?+((enrolled-previous)/previous*100).toFixed(1):null});});});
+return out;}});
+dash.calc('class_fill',{inputs:['classes'],fn:function(classes){return classes.map(function(c){return {academic_year:c.academic_year,semester:c.semester,year_level:c.year_level,course_code:c.course_code,course_title:c.course_title,faculty:c.faculty,enrolled:+c.enrolled,capacity:+c.capacity,fill_rate:+(c.enrolled/c.capacity*100).toFixed(1)};});}});
+dash.calc('fill_summary',{inputs:['class_fill'],fn:function(class_fill){
+var key=function(r){return r.academic_year+'|'+r.semester;};
+var terms=Array.from(new Set(class_fill.map(key)));
+var levels=['All'].concat(Array.from(new Set(class_fill.map(function(c){return c.year_level;}))));
+var facs=['All'].concat(Array.from(new Set(class_fill.map(function(c){return c.faculty;}))));
+var out=[];
+terms.forEach(function(term){levels.forEach(function(level){facs.forEach(function(fac){
+var rs=class_fill.filter(function(c){return key(c)===term&&(level==='All'||c.year_level===level)&&(fac==='All'||c.faculty===fac);});if(!rs.length)return;
+var enrolled=rs.reduce(function(a,c){return a+c.enrolled;},0),capacity=rs.reduce(function(a,c){return a+c.capacity;},0);
+out.push({academic_year:rs[0].academic_year,semester:rs[0].semester,year_level:level,faculty:fac,sections:rs.length,fill_rate:+(enrolled/capacity*100).toFixed(1),under_filled:rs.filter(function(c){return c.fill_rate<50;}).length,overloaded:rs.filter(function(c){return c.fill_rate>100;}).length});});});});
+return out;}});
+dash.calc('sete_fac',{inputs:['sete'],fn:function(sete){
+var groups=new Map();
+sete.forEach(function(r){var k=r.academic_year+'|'+r.semester+'|'+r.faculty;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r);});
+return Array.from(groups.values()).map(function(rs){var r=rs[0];
+var overall=+(rs.reduce(function(a,x){return a+(+x.avg_rating);},0)/rs.length).toFixed(2);
+var response_rate=+(r.respondents/r.students_handled*100).toFixed(1);
+var status=response_rate<60?'Insufficient responses':overall<3.5?'Below threshold':'OK';
+return {academic_year:r.academic_year,semester:r.semester,faculty:r.faculty,overall:overall,respondents:+r.respondents,students_handled:+r.students_handled,response_rate:response_rate,status:status};});}});
+dash.calc('sete_flags',{inputs:['sete_fac'],fn:function(sete_fac){
+var key=function(r){return r.academic_year+'|'+r.semester;};
+return Array.from(new Set(sete_fac.map(key))).map(function(term){var rs=sete_fac.filter(function(f){return key(f)===term;});
+return {academic_year:rs[0].academic_year,semester:rs[0].semester,flagged:rs.filter(function(f){return f.status==='Below threshold';}).length,insufficient:rs.filter(function(f){return f.status==='Insufficient responses';}).length};});}});
+dash.calc('sete_term',{inputs:['sete_fac'],fn:function(sete_fac){
+var key=function(r){return r.academic_year+'|'+r.semester;};
+var terms=Array.from(new Set(sete_fac.map(key)));
+var out=[];
+terms.forEach(function(term){var rs=sete_fac.filter(function(f){return key(f)===term;});
+var label=rs[0].academic_year.slice(2,4)+'-'+rs[0].academic_year.slice(7,9)+(rs[0].semester.indexOf('1')===0?' S1':' S2');
+var resp=rs.reduce(function(a,f){return a+f.respondents;},0),handled=rs.reduce(function(a,f){return a+f.students_handled;},0);
+out.push({term_key:term,term_label:label,academic_year:rs[0].academic_year,semester:rs[0].semester,faculty:'All',rating:+(rs.reduce(function(a,f){return a+f.overall*f.respondents;},0)/resp).toFixed(2),response_rate:+(resp/handled*100).toFixed(1)});
+rs.forEach(function(f){out.push({term_key:term,term_label:label,academic_year:f.academic_year,semester:f.semester,faculty:f.faculty,rating:f.overall,response_rate:f.response_rate});});});
+return out;}});
+dash.calc('sete_dim',{inputs:['sete'],fn:function(sete){
+var key=function(r){return r.academic_year+'|'+r.semester+'|'+r.dimension;};
+var out=[];
+Array.from(new Set(sete.map(key))).forEach(function(k){var rs=sete.filter(function(r){return key(r)===k;});var r0=rs[0];
+var resp=rs.reduce(function(a,r){return a+(+r.respondents);},0);
+out.push({academic_year:r0.academic_year,semester:r0.semester,faculty:'All',dimension:r0.dimension,rating:+(rs.reduce(function(a,r){return a+r.avg_rating*r.respondents;},0)/resp).toFixed(2),respondents:resp});
+rs.forEach(function(r){out.push({academic_year:r.academic_year,semester:r.semester,faculty:r.faculty,dimension:r.dimension,rating:+r.avg_rating,respondents:+r.respondents});});});
+return out;}});
+</script>
+<script>
+/* KPI cards, alerts and filters. */
+(function(){
+var A=window.AI,T=A.T;
+var TD={t_target:function(){return A.f2(T.target);},t_sete:function(){return A.f2(T.seteFloor);},t_resp:function(){return T.minResp+'%';},t_gwa:function(){return A.f2(T.gwaMax);},t_wd:function(){return T.wdMax+'%';},t_enr:function(){return T.enrDrop+'%';},t_filllo:function(){return T.fillLo+'%';},t_fillhi:function(){return T.fillHi+'%';}};
+Object.keys(TD).forEach(function(n){dash.draw(n,function(el){el.textContent=TD[n]();});});
+dash.draw('scope',function(el){var p=A.P();el.textContent='Showing AY '+p.ay+' · '+p.sem+' · '+(p.yl==='All'?'All year levels':p.yl)+' · '+(p.fac==='All'?'All faculty':p.fac);});
+function card(el,cls){var c=el.closest('.ai-card');if(!c)return;['is-ok','is-warn','is-bad'].forEach(function(k){c.classList.toggle(k,k===cls);});}
+function val(name,ids,fn){dash.draw(name,function(el){if(A.st(ids)!=='ok'){el.textContent='Failed to load';card(el,null);return;}fn(el,A.P());});}
+function flag(name,ids,test){dash.draw(name,function(el){var c=el.closest('.ai-card')||el.parentElement;var ok=c.querySelector('.ai-msg-ok'),bad=c.querySelector('.ai-msg-bad');var r=A.st(ids)==='ok'?test(A.P()):null;if(ok)ok.hidden=r!==false;if(bad)bad.hidden=r!==true;});}
+val('k_enrolled',['kpi_program'],function(el,p){var r=A.prog(p);if(!r){el.textContent='—';card(el,null);return;}el.textContent=A.fi(r.enrolled);card(el,r.enrolled_change!==null&&r.enrolled_change<T.enrDrop?'is-warn':'is-ok');});
+val('k_enrolled_chg',['kpi_program'],function(el,p){var r=A.prog(p);if(!r||r.enrolled_change===null){el.textContent='No earlier semester';return;}el.replaceChildren(A.span(A.signed(r.enrolled_change),r.enrolled_change<T.enrDrop?'ai-warnt':''));});
+val('k_gwa',['kpi_program'],function(el,p){var r=A.prog(p);if(!r){el.textContent='—';card(el,null);return;}el.textContent=A.f2(r.avg_gwa);card(el,r.avg_gwa>T.gwaMax?'is-bad':'is-ok');});
+flag('gwa_flag',['kpi_program'],function(p){var r=A.prog(p);return r?r.avg_gwa>T.gwaMax:null;});
+val('k_wd',['kpi_program'],function(el,p){var r=A.prog(p);if(!r){el.textContent='—';card(el,null);return;}el.textContent=A.pct(r.withdrawal_rate);card(el,r.withdrawal_rate>T.wdMax?'is-bad':'is-ok');});
+flag('wd_flag',['kpi_program'],function(p){var r=A.prog(p);return r?r.withdrawal_rate>T.wdMax:null;});
+val('k_fill',['fill_summary'],function(el,p){var r=A.fill(p);if(!r){el.textContent='No classes';card(el,null);return;}el.textContent=A.pct(r.fill_rate);card(el,r.under_filled+r.overloaded>0?'is-warn':'is-ok');});
+val('k_under',['fill_summary'],function(el,p){var r=A.fill(p);el.textContent=r?String(r.under_filled):'—';});
+val('k_over',['fill_summary'],function(el,p){var r=A.fill(p);el.textContent=r?String(r.overloaded):'—';});
+val('k_sete',['sete_flags'],function(el,p){var r=A.flags(p);if(!r){el.textContent='—';card(el,null);return;}el.textContent=String(r.flagged);card(el,r.flagged>0?'is-bad':'is-ok');});
+val('k_ins',['sete_flags'],function(el,p){var r=A.flags(p);el.textContent=r?String(r.insufficient):'—';});
+var AL=['kpi_program','class_fill','sete_fac'];
+dash.draw('lede',function(el){var w=el.parentElement;var ok=w.querySelector('.ai-lede-ok'),bad=w.querySelector('.ai-lede-bad');var n=A.st(AL)==='ok'?A.alerts(A.P()).length:-1;if(ok)ok.hidden=n!==0;if(bad)bad.hidden=!(n>0);});
+dash.draw('alerts',function(el){var none=el.parentElement?el.parentElement.querySelector('.ai-none'):null;el.replaceChildren();if(A.st(AL)!=='ok'){if(none)none.hidden=true;var li=document.createElement('li');li.textContent='Failed to load';el.appendChild(li);return;}
+var list=A.alerts(A.P());if(none)none.hidden=list.length>0;var order={bad:0,warn:1,info:2};list.sort(function(a,b){return order[a.sev]-order[b.sev];});
+list.forEach(function(a){var li=document.createElement('li');li.className='sev-'+a.sev;var dot=document.createElement('span');dot.className='ai-dot';var body=document.createElement('div');var tag=document.createElement('span');tag.className='ai-tag';tag.textContent=a.tag;var p=document.createElement('p');a.parts.forEach(function(x){p.append(x);});body.append(tag,p);li.append(dot,body);el.appendChild(li);});});
+dash.draw('f_ay',function(sel){var ays=Array.from(new Set(A.rows('program_terms').map(function(r){return r.academic_year;})));sel.replaceChildren.apply(sel,ays.map(function(a){return new Option('AY '+a,a);}));sel.value=A.P().ay;sel.onchange=function(){dash.setParams({ay:sel.value});};});
+dash.draw('f_fac',function(sel){var fs=Array.from(new Set(A.rows('sete').map(function(r){return r.faculty;}))).sort();sel.replaceChildren.apply(sel,[new Option('All faculty','All')].concat(fs.map(function(f){return new Option(f,f);})));sel.value=A.P().fac;sel.onchange=function(){dash.setParams({fac:sel.value});};});
+document.querySelectorAll('select[data-param]').forEach(function(sel){sel.addEventListener('change',function(){var o={};o[sel.getAttribute('data-param')]=sel.value;dash.setParams(o);});});
+dash.onData(function(){var p=A.P();document.querySelectorAll('select[data-param]').forEach(function(sel){if(document.activeElement!==sel)sel.value=p[sel.getAttribute('data-param')];});});
+document.getElementById('reset-filters').addEventListener('click',function(){dash.resetParams();});
+})();
+</script>
+<script>
+/* Charts. */
+(function(){
+var A=window.AI,T=A.T,C1='#3d444b',C2='#f0a030',CRIT='#c62f2f';
+function fit(svg,W){svg.selectAll('text').each(function(){var t=this,b;try{b=t.getBBox();}catch(e){return;}if(!b.width)return;var anchor=t.getAttribute('text-anchor')||'start';if(anchor==='start'&&b.x+b.width>W-2){var s=t.textContent;while(s.length>4&&t.getBBox().x+t.getComputedTextLength()>W-2){s=s.slice(0,-2);t.textContent=s+'…';}}else{var over=b.x+b.width-(W-2);if(over>0)t.setAttribute('x',(+t.getAttribute('x'))-over);if(b.x<2)t.setAttribute('x',(+t.getAttribute('x'))+(2-b.x));}});}
+function svgFor(el,W,H,label){return d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox','0 0 '+W+' '+H).attr('role','img').attr('aria-label',label);}
+function vref(svg,x,v,top,bottom){svg.append('line').attr('x1',x(v)).attr('x2',x(v)).attr('y1',top).attr('y2',bottom).style('stroke','var(--ref)').style('stroke-dasharray','5 4');}
+function xgrid(svg,x,ticks,top,bottom,H,fmt){svg.append('g').selectAll('line').data(ticks).join('line').attr('x1',function(d){return x(d);}).attr('x2',function(d){return x(d);}).attr('y1',top).attr('y2',bottom).style('stroke','var(--grid)');svg.append('g').selectAll('text').data(ticks).join('text').attr('x',function(d){return x(d);}).attr('y',H-6).attr('text-anchor','middle').text(fmt);}
+dash.draw('c_trend',function(el){if(!A.ready(el,A.st(['sete_term'])))return;var p=A.P();var all=A.rows('sete_term');
+var prog=all.filter(function(r){return r.faculty==='All';});var fac=p.fac==='All'?[]:all.filter(function(r){return r.faculty===p.fac;});
+el.replaceChildren();if(!prog.length){A.empty(el,'No SETE results.');return;}
+var lg=document.createElement('div');lg.className='ai-legend';function add(c,t){var s=document.createElement('span');var i=document.createElement('i');i.style.background=c;s.append(i,t);lg.appendChild(s);}
+add(C1,'Program average');if(fac.length)add(C2,p.fac);el.appendChild(lg);
+var W=Math.max(280,el.clientWidth),H=250,m={t:20,r:16,b:28,l:36};
+var keys=prog.map(function(r){return r.term_key;});
+var x=d3.scalePoint(keys,[m.l,W-m.r]).padding(0.4);
+var vals=prog.concat(fac).map(function(r){return r.rating;});var lo=Math.min(3.2,Math.floor((d3.min(vals)-0.1)*10)/10);
+var y=d3.scaleLinear([lo,5],[H-m.b,m.t]);
+var svg=svgFor(el,W,H,'Line chart of the average SETE rating for each semester for the program'+(fac.length?' and for '+p.fac:''));
+var sel=p.ay+'|'+p.sem,step=x.step();
+if(keys.indexOf(sel)>=0)svg.append('rect').attr('x',x(sel)-step/2).attr('width',step).attr('y',m.t-12).attr('height',H-m.b-m.t+12).attr('rx',4).style('fill','var(--chart-muted)').style('opacity',0.18);
+var yt=y.ticks(5);
+svg.append('g').selectAll('line').data(yt).join('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',function(d){return y(d);}).attr('y2',function(d){return y(d);}).style('stroke','var(--grid)');
+svg.append('g').selectAll('text').data(yt).join('text').attr('x',m.l-6).attr('y',function(d){return y(d)+4;}).attr('text-anchor','end').text(function(d){return A.f1(d);});
+var every=W<420?2:1;
+svg.append('g').selectAll('text').data(prog).join('text').attr('x',function(d){return x(d.term_key);}).attr('y',H-8).attr('text-anchor','middle').text(function(d,i){return i%every===0||d.term_key===sel?d.term_label:'';});
+[T.target,T.seteFloor].forEach(function(v){svg.append('line').attr('x1',m.l).attr('x2',W-m.r).attr('y1',y(v)).attr('y2',y(v)).style('stroke','var(--ref)').style('stroke-dasharray','5 4');});
+var tp=A.tip(el);var line=d3.line().x(function(d){return x(d.term_key);}).y(function(d){return y(d.rating);});
+[[prog,C1,'Program average'],[fac,C2,p.fac]].forEach(function(s,k){var rs=s[0],c=s[1],name=s[2];if(!rs.length)return;
+svg.append('path').datum(rs).attr('d',line).style('fill','none').style('stroke',c).style('stroke-width',2.5);
+svg.append('g').selectAll('text').data(rs).join('text').attr('class','lbl-strong').attr('x',function(d){return x(d.term_key);}).attr('y',function(d){return y(d.rating)+(k?18:-10);}).attr('text-anchor','middle').text(function(d){return A.f2(d.rating);});
+svg.append('g').selectAll('circle').data(rs).join('circle').attr('cx',function(d){return x(d.term_key);}).attr('cy',function(d){return y(d.rating);}).attr('r',5).style('fill',function(d){return d.rating<T.seteFloor&&d.response_rate>=T.minResp?CRIT:c;}).style('stroke','#fff').style('stroke-width',2).style('cursor','pointer')
+.on('pointermove',function(ev,d){tp.show(ev,[name+' · '+d.term_label,'Average rating: '+A.f2(d.rating),'Response rate: '+A.pct(d.response_rate)]);}).on('pointerleave',tp.hide);});fit(svg,W);});
+dash.draw('c_dims',function(el){if(!A.ready(el,A.st(['sete_dim'])))return;var p=A.P();
+var data=A.rows('sete_dim').filter(function(r){return r.academic_year===p.ay&&r.semester===p.sem&&r.faculty===p.fac;});
+el.replaceChildren();if(!data.length){A.empty(el,'No SETE results for this selection.');return;}
+var W=Math.max(260,el.clientWidth),rowH=46,m={t:6,r:46,l:2,b:22},H=m.t+data.length*rowH+m.b;
+var x=d3.scaleLinear([0,5],[m.l,W-m.r]);
+var svg=svgFor(el,W,H,'Bar chart of the average SETE rating for each evaluation dimension in the selected semester');
+xgrid(svg,x,[0,1,2,3,4,5],m.t,H-m.b,H,function(d){return d;});
+var tp=A.tip(el);
+var g=svg.append('g').selectAll('g').data(data).join('g').attr('transform',function(d,i){return 'translate(0,'+(m.t+i*rowH)+')';});
+g.append('text').attr('class','lbl-strong').attr('x',m.l).attr('y',13).text(function(d){return d.dimension;});
+g.append('rect').attr('x',x(0)).attr('y',19).attr('height',16).attr('rx',3).attr('width',function(d){return Math.max(0,x(d.rating)-x(0));}).style('fill',function(d){return d.rating<T.seteFloor?CRIT:C1;}).style('cursor','pointer')
+.on('pointermove',function(ev,d){tp.show(ev,[d.dimension,'Average rating: '+A.f2(d.rating)+' of 5','Respondents: '+A.fi(d.respondents)]);}).on('pointerleave',tp.hide);
+g.append('text').attr('class','lbl-strong').attr('x',function(d){return x(d.rating)+6;}).attr('y',32).text(function(d){return A.f2(d.rating);});
+vref(svg,x,T.target,m.t,H-m.b);vref(svg,x,T.seteFloor,m.t,H-m.b);fit(svg,W);});
+dash.draw('c_fill',function(el){if(!A.ready(el,A.st(['class_fill'])))return;var p=A.P();
+var data=A.rows('class_fill').filter(function(c){return c.academic_year===p.ay&&c.semester===p.sem&&(p.yl==='All'||c.year_level===p.yl)&&(p.fac==='All'||c.faculty===p.fac);}).slice().sort(function(a,b){return b.fill_rate-a.fill_rate;});
+el.replaceChildren();if(!data.length){A.empty(el,'No classes match these filters.');return;}
+var W=Math.max(260,el.clientWidth),rowH=34,m={t:6,r:52,l:2,b:22},H=m.t+data.length*rowH+m.b;
+var x=d3.scaleLinear([0,Math.max(110,d3.max(data,function(d){return d.fill_rate;})+5)],[m.l,W-m.r]);
+var svg=svgFor(el,W,H,'Bar chart of the fill rate of each class section in the selected semester');
+xgrid(svg,x,x.ticks(W<400?3:5),m.t,H-m.b,H,function(d){return d+'%';});
+var tp=A.tip(el);
+var g=svg.append('g').selectAll('g').data(data).join('g').attr('transform',function(d,i){return 'translate(0,'+(m.t+i*rowH)+')';});
+g.append('text').attr('class','lbl-strong').attr('x',m.l).attr('y',12).text(function(d){return d.course_code+' · '+d.course_title;});
+g.append('rect').attr('x',x(0)).attr('y',17).attr('height',14).attr('rx',3).attr('width',function(d){return Math.max(0,x(d.fill_rate)-x(0));}).style('fill',function(d){return d.fill_rate<T.fillLo||d.fill_rate>T.fillHi?CRIT:C1;}).style('cursor','pointer')
+.on('pointermove',function(ev,d){tp.show(ev,[d.course_code+' · '+d.course_title,'Faculty: '+d.faculty,'Enrolled: '+d.enrolled+' of '+d.capacity,'Fill rate: '+A.pct(d.fill_rate)]);}).on('pointerleave',tp.hide);
+g.append('text').attr('class','lbl-strong').attr('x',function(d){return x(d.fill_rate)+6;}).attr('y',29).text(function(d){return A.pct(d.fill_rate);});
+vref(svg,x,T.fillLo,m.t,H-m.b);vref(svg,x,T.fillHi,m.t,H-m.b);fit(svg,W);});
+})();
+</script>
+<script>
+dash._run();
+var _rt;window.addEventListener('resize',function(){clearTimeout(_rt);_rt=setTimeout(dash._run,150);});
+</script>
+</body>
+</html>
