@@ -73,13 +73,20 @@ body{margin:0;background:#e9ebee}
 .ai-notes dd{margin:0;color:var(--muted)}
 .ai-notes h4{margin:12px 0 4px;font-size:14px}
 .ai-notes ul,.ai-notes p{font-size:12px;color:var(--muted);margin:4px 0}
+.ai-btn-ghost{background:#fff;color:var(--text);border-color:#d1d5db}
+.ai-btn-ghost:hover{background:#f3f4f6}
+.ai-btn-ghost[aria-pressed=true]{background:var(--dark);border-color:var(--dark);color:#fff}
+.labels-on [data-label]{position:relative;outline:2px dashed rgba(198,47,47,.75);outline-offset:3px}
+.labels-on [data-label]::after{content:attr(data-label);position:absolute;top:8px;right:8px;z-index:20;width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;font:700 13px/26px -apple-system,'Segoe UI',Arial,sans-serif;text-align:center;letter-spacing:0;text-transform:none;box-shadow:0 0 0 3px #fff;pointer-events:none}
+.labels-on .ai-btn[data-label]::after{top:-14px;right:-14px}
+.labels-on .ai-card h3{padding-right:30px}
 .ai-footer{text-align:center;font-size:11.5px;color:var(--muted);margin:0}
 </style>
 </head>
 <body>
 <div id="dash-root">
 <div class="ai">
-<header class="ai-head" id="header">
+<header class="ai-head" id="header" data-label="1">
 <div class="ai-brand">
 <div class="ai-logo" id="app-logo"><svg viewBox="40 0 196 214" width="44" height="48" role="img" aria-label="AcadInsight logo" style="display:block"><path d="M70 72 C70 22 130 2 190 30 C215 42 228 62 226 88 L204 94 C200 66 176 50 150 48 C120 46 98 56 88 76 Z" fill="#FFFFFF"/><g stroke="#C62F2F" stroke-width="4" stroke-linecap="round" fill="none"><path d="M100 26 L108 57"/><path d="M130 14 L133 48"/><path d="M160 17 L156 49"/><path d="M188 30 L177 57"/><path d="M212 50 L196 74"/></g><path d="M56 112 C58 80 90 60 125 60 C165 60 194 90 192 140 C191 165 186 185 176 200 Q118 190 56 204 Z" fill="#FFFFFF" stroke="#C62F2F" stroke-width="7" stroke-linejoin="round"/><path d="M72 104 L136 100 Q143 100 140 107 L134 120 Q132 123 128 123 L90 124 L90 208 L72 208 Z" fill="#C62F2F"/><rect x="104" y="164" width="10" height="22" rx="2" fill="#C62F2F"/><rect x="120" y="152" width="10" height="34" rx="2" fill="#C62F2F"/><rect x="136" y="140" width="10" height="46" rx="2" fill="#C62F2F"/></svg></div>
 <div class="ai-brand-text">
@@ -90,40 +97,41 @@ body{margin:0;background:#e9ebee}
 <p class="ai-lede"><span data-draw="lede"></span><span class="ai-lede-bad" hidden>Some indicators crossed their warning thresholds. See Alerts below.</span><span class="ai-lede-ok" hidden>All indicators are within their targets for this selection.</span><span class="ai-scope" data-draw="scope">—</span></p>
 </header>
 
-<section class="ai-filters" id="filters" aria-label="Filters">
+<section class="ai-filters" id="filters" aria-label="Filters" data-label="2">
 <label>Academic year<select class="dash-select" data-draw="f_ay" aria-label="Academic year"></select></label>
 <label>Semester<select class="dash-select" data-param="sem" aria-label="Semester"><option value="1st Semester">1st Semester</option><option value="2nd Semester">2nd Semester</option></select></label>
 <label>Year level<select class="dash-select" data-param="yl" aria-label="Year level"><option value="All">All year levels</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option></select></label>
 <label>Faculty (coded)<select class="dash-select" data-draw="f_fac" aria-label="Faculty"></select></label>
-<button type="button" class="ai-btn" id="reset-filters">Reset filters</button>
+<button type="button" class="ai-btn" id="reset-filters" data-label="3">Reset filters</button>
+<button type="button" class="ai-btn ai-btn-ghost" id="toggle-labels" aria-pressed="false">Show labels</button>
 </section>
 
 <section class="ai-cards" id="kpis" aria-label="Key performance indicators">
-<article class="ai-card" id="card-enrolled">
+<article class="ai-card" id="card-enrolled" data-label="4">
 <h3>Total enrolled students</h3>
 <div class="ai-val" data-draw="k_enrolled">—</div>
 <p class="ai-note"><span data-draw="k_enrolled_chg">—</span> vs. previous semester</p>
 <p class="ai-note">Alert if the change falls below <span data-draw="t_enr">—</span></p>
 </article>
-<article class="ai-card" id="card-gwa">
+<article class="ai-card" id="card-gwa" data-label="5">
 <h3>Program average GWA</h3>
 <div class="ai-val" data-draw="k_gwa">—</div>
 <p class="ai-note"><span data-draw="gwa_flag"></span><span class="ai-msg-ok ai-good" hidden>Within the <span data-draw="t_gwa">—</span> limit</span><span class="ai-msg-bad ai-badt" hidden>Worse than the <span data-draw="t_gwa">—</span> limit</span></p>
 <p class="ai-note">1.00 is highest; 3.00 is passing</p>
 </article>
-<article class="ai-card" id="card-withdrawal">
+<article class="ai-card" id="card-withdrawal" data-label="6">
 <h3>Withdrawal / dropout rate</h3>
 <div class="ai-val" data-draw="k_wd">—</div>
 <p class="ai-note"><span data-draw="wd_flag"></span><span class="ai-msg-ok ai-good" hidden>Within the <span data-draw="t_wd">—</span> limit</span><span class="ai-msg-bad ai-badt" hidden>Above the <span data-draw="t_wd">—</span> limit</span></p>
 <p class="ai-note">Students who dropped or withdrew</p>
 </article>
-<article class="ai-card" id="card-fill">
+<article class="ai-card" id="card-fill" data-label="7">
 <h3>Class fill rate</h3>
 <div class="ai-val" data-draw="k_fill">—</div>
 <p class="ai-note"><b data-draw="k_under">—</b> under-filled · <b data-draw="k_over">—</b> overloaded</p>
 <p class="ai-note">Healthy range <span data-draw="t_filllo">—</span> to <span data-draw="t_fillhi">—</span> of capacity</p>
 </article>
-<article class="ai-card" id="card-sete">
+<article class="ai-card" id="card-sete" data-label="8">
 <h3>Faculty below SETE threshold</h3>
 <div class="ai-val" data-draw="k_sete">—</div>
 <p class="ai-note"><b data-draw="k_ins">—</b> not interpreted (response rate under <span data-draw="t_resp">—</span>)</p>
@@ -131,7 +139,7 @@ body{margin:0;background:#e9ebee}
 </article>
 </section>
 
-<section class="ai-panel" id="alerts">
+<section class="ai-panel" id="alerts" data-label="9">
 <h2>Alerts</h2>
 <p class="ai-sub">Indicators past their warning thresholds for the current filters. SETE alerts are prompts for support, not personnel decisions.</p>
 <ul class="ai-alerts" data-draw="alerts"></ul>
@@ -139,24 +147,24 @@ body{margin:0;background:#e9ebee}
 </section>
 
 <section class="ai-grid" id="charts">
-<article class="ai-panel" id="sete-trend">
+<article class="ai-panel" id="sete-trend" data-label="10">
 <h2>SETE rating across semesters</h2>
 <p class="ai-sub">Respondent-weighted average of the four SETE dimensions (scale 1 to 5). Dashed lines mark the target (<span data-draw="t_target">—</span>) and the alert level (<span data-draw="t_sete">—</span>). The shaded column is the selected semester. Pick a faculty code to compare with the program.</p>
 <div class="ai-chart" data-draw="c_trend"></div>
 </article>
-<article class="ai-panel" id="sete-dims">
+<article class="ai-panel" id="sete-dims" data-label="11">
 <h2>SETE rating by evaluation dimension</h2>
 <p class="ai-sub">Selected semester and faculty. The year level filter does not apply to SETE.</p>
 <div class="ai-chart" data-draw="c_dims"></div>
 </article>
-<article class="ai-panel ai-wide" id="class-fill">
+<article class="ai-panel ai-wide" id="class-fill" data-label="12">
 <h2>Class fill rate by course</h2>
 <p class="ai-sub">Enrolled students ÷ section capacity. Dashed lines mark <span data-draw="t_filllo">—</span> and <span data-draw="t_fillhi">—</span>.</p>
 <div class="ai-chart" data-draw="c_fill"></div>
 </article>
 </section>
 
-<details class="ai-panel ai-notes" id="notes">
+<details class="ai-panel ai-notes" id="notes" data-label="13">
 <summary>KPI definitions, data sources and privacy</summary>
 <dl>
 <dt>Total enrolled</dt><dd>Officially enrolled students in the program for the semester (Student and Faculty Portal).</dd>
@@ -402,6 +410,10 @@ vref(svg,x,T.fillLo,m.t,H-m.b);vref(svg,x,T.fillHi,m.t,H-m.b);fit(svg,W);});
 })();
 </script>
 <script>
+(function(){var root=document.getElementById('dash-root'),b=document.getElementById('toggle-labels');
+function set(on){root.classList.toggle('labels-on',on);b.setAttribute('aria-pressed',String(on));b.textContent=on?'Hide labels':'Show labels';}
+b.addEventListener('click',function(){set(!root.classList.contains('labels-on'));});
+if(/[?&]labels=1/.test(location.search))set(true);})();
 dash._run();
 var _rt;window.addEventListener('resize',function(){clearTimeout(_rt);_rt=setTimeout(dash._run,150);});
 </script>
